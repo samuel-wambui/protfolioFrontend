@@ -54,7 +54,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                   Case Study
                 </span>
               </div>
-              <h1 className="mt-5 text-4xl font-bold text-white sm:text-5xl">{project.title}</h1>
+              <h1 className="mt-5 text-3xl font-bold leading-tight text-white sm:text-5xl">{project.title}</h1>
               <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300">{project.problem}</p>
               <div className="mt-7 flex flex-wrap gap-3">
                 {project.githubUrl ? (

@@ -53,7 +53,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
           <span aria-hidden="true">/</span>
           <span>{post.readTime}</span>
         </div>
-        <h1 className="mt-5 text-4xl font-bold text-white sm:text-5xl">{post.title}</h1>
+        <h1 className="mt-5 text-3xl font-bold leading-tight text-white sm:text-5xl">{post.title}</h1>
         <p className="mt-5 text-lg leading-8 text-slate-300">{post.excerpt}</p>
         <div className="mt-8 flex flex-wrap gap-2">
           {post.tags.map((tag) => (

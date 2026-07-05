@@ -65,7 +65,7 @@ export default async function ExperiencePage() {
   const quote = profile.currentlyFocusedOn[1] ?? profile.heroText;
 
   return (
-    <main className="relative isolate overflow-hidden border-b border-white/10 bg-[#030712] px-4 pb-12 pt-8 sm:px-6 lg:px-8">
+    <main className="relative isolate overflow-x-hidden border-b border-white/10 bg-[#030712] px-4 pb-12 pt-8 sm:px-6 lg:px-8">
       <div
         aria-hidden="true"
         className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_18%_8%,rgba(20,184,166,0.15),transparent_28rem),radial-gradient(circle_at_80%_6%,rgba(59,130,246,0.13),transparent_32rem),linear-gradient(180deg,#030712_0%,#07111f_46%,#030712_100%)]"
@@ -79,7 +79,7 @@ export default async function ExperiencePage() {
         <section className="grid gap-8 py-4 lg:grid-cols-[1fr_0.78fr] lg:items-center">
           <div>
             <SectionKicker icon={BriefcaseBusiness}>Experience</SectionKicker>
-            <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-tight text-white sm:text-5xl">
+            <h1 className="mt-5 max-w-3xl text-3xl font-bold leading-tight text-white sm:text-5xl">
               Experience shaped by practical <span className="text-teal-300">systems work.</span>
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300">
@@ -168,7 +168,7 @@ function ExperienceCard({ item, projects }: { item: Experience; projects: Projec
       <span className="absolute -left-[2.62rem] top-7 h-4 w-4 rounded-full border border-teal-100 bg-teal-300 shadow-[0_0_20px_rgba(45,212,191,0.82)]" />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-teal-300">{item.company}</h2>
+          <h2 className="text-xl font-bold text-teal-300 sm:text-2xl">{item.company}</h2>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <p className="text-base font-bold text-white">{item.role}</p>
             <span className="rounded-md bg-teal-300/10 px-2.5 py-1 text-xs font-bold text-teal-300">Full-time</span>
@@ -303,7 +303,7 @@ function QuoteCard({ quote }: { quote: string }) {
       <span className="relative grid h-12 w-12 place-items-center rounded-full bg-teal-300/10 text-teal-300">
         <Quote className="h-6 w-6" />
       </span>
-      <blockquote className="relative mt-8 text-2xl font-semibold leading-snug text-white">
+      <blockquote className="relative mt-8 text-xl font-semibold leading-snug text-white sm:text-2xl">
         {highlightRealImpact(quote)}
       </blockquote>
     </section>

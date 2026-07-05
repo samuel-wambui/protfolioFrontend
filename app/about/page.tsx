@@ -91,7 +91,7 @@ export default async function AboutPage() {
   const closingTitle = profile.currentlyFocusedOn[3] ?? "Let's build something meaningful together.";
 
   return (
-    <main className="relative isolate overflow-hidden border-b border-white/10 bg-[#030712] px-4 pb-12 pt-8 sm:px-6 lg:px-8">
+    <main className="relative isolate overflow-x-hidden border-b border-white/10 bg-[#030712] px-4 pb-12 pt-8 sm:px-6 lg:px-8">
       <div
         aria-hidden="true"
         className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_18%_8%,rgba(20,184,166,0.16),transparent_28rem),radial-gradient(circle_at_82%_6%,rgba(59,130,246,0.12),transparent_30rem),linear-gradient(180deg,#030712_0%,#07111f_46%,#030712_100%)]"
@@ -263,7 +263,7 @@ function ProfileSignalCard({ profile, quote }: { profile: ResolvedProfile; quote
                 <div>
                   <p className="text-xs text-slate-500">{row.label}</p>
                   {row.href ? (
-                    <a className="group" href={row.href}>
+                    <a className="group break-words" href={row.href}>
                       {value}
                     </a>
                   ) : (
@@ -305,7 +305,7 @@ function BuildCard({ index, project }: { index: number; project: Project }) {
         {bullets.slice(0, 5).map((item) => (
           <li className="flex gap-2" key={item}>
             <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-slate-300" />
-            <span>{item}</span>
+            <span className="min-w-0">{item}</span>
           </li>
         ))}
       </ul>
@@ -364,7 +364,7 @@ function SkillGroup({ group }: { group: SkillGroupData }) {
         {group.items.map((skill) => (
           <li className="flex gap-2" key={skill.id}>
             <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-slate-400" />
-            <span>{skill.name}</span>
+            <span className="min-w-0">{skill.name}</span>
           </li>
         ))}
       </ul>

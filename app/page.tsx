@@ -36,7 +36,7 @@ export default async function HomePage() {
   const stats = getStats(profile, projectResult.length, skillResult.length);
 
   return (
-    <main className="relative isolate overflow-hidden px-4 pb-10 pt-5 sm:px-6 lg:px-8">
+    <main className="relative isolate overflow-x-hidden px-4 pb-10 pt-5 sm:px-6 lg:px-8">
       <div aria-hidden="true" className="absolute inset-0 -z-20 bg-[#030712]" />
       <div
         aria-hidden="true"
@@ -48,14 +48,14 @@ export default async function HomePage() {
       />
       <div
         aria-hidden="true"
-        className="absolute left-0 top-12 -z-10 h-[480px] w-[42rem] bg-[radial-gradient(circle_at_left,rgba(20,184,166,0.18),transparent_62%)]"
+        className="absolute left-0 top-12 -z-10 h-[480px] w-full max-w-[42rem] bg-[radial-gradient(circle_at_left,rgba(20,184,166,0.18),transparent_62%)]"
       />
       <div
         aria-hidden="true"
         className="absolute inset-y-0 left-0 -z-10 w-1/2 bg-[linear-gradient(rgba(20,184,166,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.08)_1px,transparent_1px)] bg-[size:42px_42px] opacity-30"
       />
 
-      <section className="mx-auto grid min-h-[calc(100vh-112px)] max-w-7xl grid-rows-[1fr_auto] gap-6">
+      <section className="mx-auto grid min-h-[calc(100svh-112px)] max-w-7xl gap-6 lg:grid-rows-[1fr_auto]">
         <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
           <div className="animate-fade-up">
             <span className="inline-flex min-h-7 w-fit items-center gap-2 rounded-md border border-teal-400/20 bg-teal-400/10 px-3 text-[11px] font-bold uppercase tracking-[0.18em] text-teal-300">
@@ -63,7 +63,7 @@ export default async function HomePage() {
               {profile.title}
             </span>
 
-            <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-none text-white sm:text-5xl lg:text-5xl">
+            <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-5xl lg:leading-none">
               {profile.fullName}
             </h1>
 
@@ -269,7 +269,7 @@ function HeroStat({
       <span className="grid h-9 w-9 place-items-center rounded-md border border-teal-300/20 bg-teal-300/10 text-teal-300">
         <Icon className="h-4 w-4" />
       </span>
-      <div>
+      <div className="min-w-0">
         <p className="text-base font-bold leading-none text-teal-200">{value}</p>
         <p className="mt-1 text-[11px] font-bold text-white">{label}</p>
         <p className="mt-0.5 text-[10px] text-slate-500">{note}</p>
@@ -292,8 +292,8 @@ function ProjectMiniCard({ index, project }: { index: number; project: Project }
           <Icon className="h-4 w-4" />
         </span>
         <div>
-          <h3 className="line-clamp-2 text-sm font-bold leading-5 text-white">{project.title}</h3>
-          <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-400">{project.problem}</p>
+          <h3 className="text-sm font-bold leading-5 text-white">{project.title}</h3>
+          <p className="mt-1 text-[11px] leading-4 text-slate-400">{project.problem}</p>
         </div>
       </div>
 

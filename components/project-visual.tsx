@@ -37,7 +37,7 @@ export function ProjectVisual({ screenshots }: ProjectVisualProps) {
               </div>
             </>
           )}
-          <figcaption className="border-t border-white/10 px-4 py-3 text-sm font-semibold text-white">
+          <figcaption className="break-all border-t border-white/10 px-4 py-3 text-sm font-semibold text-white">
             {screenshot}
           </figcaption>
         </figure>

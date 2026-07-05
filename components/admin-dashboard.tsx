@@ -1142,7 +1142,7 @@ function VisitDetail({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 rounded-md border border-white/10 bg-black/20 px-3 py-2">
       <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</dt>
-      <dd className="mt-1 truncate text-slate-300" title={value}>{value}</dd>
+      <dd className="mt-1 break-words text-slate-300" title={value}>{value}</dd>
     </div>
   );
 }
@@ -1176,7 +1176,7 @@ function EditableList<T extends { id: number }>({
           >
             <div>
               <p className="text-sm font-semibold text-white">{getTitle(item)}</p>
-              <p className="mt-1 line-clamp-2 text-xs text-slate-400">{getMeta(item)}</p>
+              <p className="mt-1 text-xs text-slate-400">{getMeta(item)}</p>
             </div>
             <div className="flex items-center gap-2">
               <button
