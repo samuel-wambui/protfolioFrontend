@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { LogOut, Pencil, Plus, Save, ShieldCheck, Trash2 } from "lucide-react";
+import { Eye, EyeOff, LogOut, Pencil, Plus, Save, ShieldCheck, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { apiFetch } from "@/lib/api-client";
@@ -287,6 +287,7 @@ export function AdminDashboard({ activeSection }: { activeSection: AdminSectionI
   const [blogPostFormVersion, setBlogPostFormVersion] = useState(0);
   const [leadershipImpactFormVersion, setLeadershipImpactFormVersion] = useState(0);
   const [openAiCredentialFormVersion, setOpenAiCredentialFormVersion] = useState(0);
+  const [showOpenAiApiKey, setShowOpenAiApiKey] = useState(false);
   const [profileValues, setProfileValues] = useState<ProfileFormValues>(emptyProfileFormValues);
   const [projectValues, setProjectValues] = useState<ProjectFormValues>(emptyProjectFormValues);
   const [experienceValues, setExperienceValues] = useState<ExperienceFormValues>(emptyExperienceFormValues);
@@ -705,7 +706,14 @@ export function AdminDashboard({ activeSection }: { activeSection: AdminSectionI
             <TextField defaultValue="text-embedding-3-small" name="embeddingModel" title="Embedding Model" />
             <TextField defaultValue="1536" name="embeddingDimensions" title="Embedding Dimensions" type="number" />
           </div>
-          <TextField name="apiKey" placeholder="sk-..." required title="OpenAI API Key" type="password" />
+          <PasswordField
+            name="apiKey"
+            placeholder="sk-..."
+            required
+            title="OpenAI API Key"
+            show={showOpenAiApiKey}
+            onToggleShow={() => setShowOpenAiApiKey((current) => !current)}
+          />
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <SaveButton label="Save and Activate Key" />
             <button
@@ -1493,6 +1501,48 @@ function TextField({
         required={required}
         type={type}
       />
+    </label>
+  );
+}
+
+function PasswordField({
+  defaultValue,
+  name,
+  placeholder,
+  required = false,
+  title,
+  show,
+  onToggleShow,
+}: {
+  defaultValue?: string;
+  name: string;
+  placeholder?: string;
+  required?: boolean;
+  title: string;
+  show: boolean;
+  onToggleShow: () => void;
+}) {
+  return (
+    <label className="grid gap-2 text-sm font-semibold text-white">
+      {title}
+      <div className="relative">
+        <input
+          className="focus-ring min-h-11 w-full rounded-md border border-white/10 bg-navy-950 px-3 pr-10 text-white placeholder:text-slate-500"
+          defaultValue={defaultValue}
+          name={name}
+          placeholder={placeholder}
+          required={required}
+          type={show ? "text" : "password"}
+        />
+        <button
+          type="button"
+          aria-label={show ? "Hide API key" : "Show API key"}
+          onClick={onToggleShow}
+          className="absolute inset-y-0 right-2 flex items-center rounded-md px-2 text-slate-300 transition hover:text-white"
+        >
+          {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
     </label>
   );
 }
