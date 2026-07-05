@@ -34,8 +34,24 @@ type AdminCollections = {
   education: Education[];
   experience: Experience[];
   leadershipImpact: LeadershipImpact[];
+  openAiCredentials: OpenAiCredential[];
   projects: Project[];
   skills: Skill[];
+};
+
+type OpenAiCredential = {
+  id: number;
+  label: string;
+  endpointUrl: string;
+  embeddingModel: string;
+  embeddingDimensions: number;
+  maskedApiKey: string;
+  active: boolean;
+  expired: boolean;
+  createdAt: string;
+  updatedAt: string;
+  expiredAt?: string | null;
+  deletedAt?: string | null;
 };
 
 type ProfileFormValues = {
@@ -156,6 +172,7 @@ const emptyCollections: AdminCollections = {
   education: [],
   experience: [],
   leadershipImpact: [],
+  openAiCredentials: [],
   projects: [],
   skills: [],
 };
@@ -269,6 +286,7 @@ export function AdminDashboard({ activeSection }: { activeSection: AdminSectionI
   const [certificationFormVersion, setCertificationFormVersion] = useState(0);
   const [blogPostFormVersion, setBlogPostFormVersion] = useState(0);
   const [leadershipImpactFormVersion, setLeadershipImpactFormVersion] = useState(0);
+  const [openAiCredentialFormVersion, setOpenAiCredentialFormVersion] = useState(0);
   const [profileValues, setProfileValues] = useState<ProfileFormValues>(emptyProfileFormValues);
   const [projectValues, setProjectValues] = useState<ProjectFormValues>(emptyProjectFormValues);
   const [experienceValues, setExperienceValues] = useState<ExperienceFormValues>(emptyExperienceFormValues);
@@ -316,6 +334,7 @@ export function AdminDashboard({ activeSection }: { activeSection: AdminSectionI
         setCertificationFormVersion((current) => current + 1);
         setBlogPostFormVersion((current) => current + 1);
         setLeadershipImpactFormVersion((current) => current + 1);
+        setOpenAiCredentialFormVersion((current) => current + 1);
         setState({
           section: "Dashboard",
           status: "idle",
@@ -458,6 +477,68 @@ export function AdminDashboard({ activeSection }: { activeSection: AdminSectionI
     }
   }
 
+  async function submitOpenAiCredential(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setState({ section: "AI Settings", status: "saving", message: "Saving OpenAI credential..." });
+
+    const formData = new FormData(event.currentTarget);
+
+    try {
+      await apiFetch<OpenAiCredential>("/openai-credentials", {
+        method: "POST",
+        body: {
+          label: textValue(formData, "label"),
+          apiKey: textValue(formData, "apiKey"),
+          endpointUrl: textValue(formData, "endpointUrl"),
+          embeddingModel: textValue(formData, "embeddingModel"),
+          embeddingDimensions: nullableNumberValue(formData, "embeddingDimensions"),
+        },
+      });
+
+      await refreshCollections();
+      setOpenAiCredentialFormVersion((current) => current + 1);
+      setState({
+        section: "AI Settings",
+        status: "saved",
+        message: "OpenAI credential saved and activated. Older credentials were deactivated.",
+      });
+    } catch (error) {
+      setState({
+        section: "AI Settings",
+        status: "error",
+        message: error instanceof Error ? error.message : "OpenAI credential could not be saved.",
+      });
+    }
+  }
+
+  async function updateOpenAiCredential(id: number, action: "activate" | "expire" | "delete") {
+    const confirmed =
+      action === "delete"
+        ? window.confirm("Delete this OpenAI credential? It will be hidden and no longer usable.")
+        : true;
+
+    if (!confirmed) {
+      return;
+    }
+
+    setState({ section: "AI Settings", status: "saving", message: `Updating OpenAI credential...` });
+
+    try {
+      await apiFetch<OpenAiCredential>(`/openai-credentials/${id}${action === "delete" ? "" : `/${action}`}`, {
+        method: action === "delete" ? "DELETE" : "PATCH",
+      });
+
+      await refreshCollections();
+      setState({ section: "AI Settings", status: "saved", message: `OpenAI credential ${action}d.` });
+    } catch (error) {
+      setState({
+        section: "AI Settings",
+        status: "error",
+        message: error instanceof Error ? error.message : "OpenAI credential could not be updated.",
+      });
+    }
+  }
+
   function editProject(project: Project) {
     setProjectValues(toProjectFormValues(project));
     setProjectFormVersion((current) => current + 1);
@@ -587,6 +668,26 @@ export function AdminDashboard({ activeSection }: { activeSection: AdminSectionI
 
       <AdminSection activeSection={activeSection} sectionId="visitors" title="Visitors">
         <VisitEventList events={collections.analyticsEvents} />
+      </AdminSection>
+
+      <AdminSection activeSection={activeSection} sectionId="ai-settings" title="AI Settings">
+        <form className="grid gap-4" key={openAiCredentialFormVersion} onSubmit={submitOpenAiCredential}>
+          <div className="grid gap-4 md:grid-cols-2">
+            <TextField defaultValue="OpenAI embedding key" name="label" title="Label" />
+            <TextField defaultValue="https://api.openai.com/v1/embeddings" name="endpointUrl" title="Embeddings Endpoint" type="url" />
+            <TextField defaultValue="text-embedding-3-small" name="embeddingModel" title="Embedding Model" />
+            <TextField defaultValue="1536" name="embeddingDimensions" title="Embedding Dimensions" type="number" />
+          </div>
+          <TextField name="apiKey" placeholder="sk-..." required title="OpenAI API Key" type="password" />
+          <SaveButton label="Save and Activate Key" />
+        </form>
+
+        <OpenAiCredentialList
+          credentials={collections.openAiCredentials}
+          onActivate={(credential) => updateOpenAiCredential(credential.id, "activate")}
+          onDelete={(credential) => updateOpenAiCredential(credential.id, "delete")}
+          onExpire={(credential) => updateOpenAiCredential(credential.id, "expire")}
+        />
       </AdminSection>
 
       <AdminSection activeSection={activeSection} sectionId="profile" title="Profile and Hero Text">
@@ -981,7 +1082,17 @@ export function AdminDashboard({ activeSection }: { activeSection: AdminSectionI
 }
 
 async function fetchAdminCollections(portfolioId: string): Promise<AdminCollections> {
-  const [projects, experience, education, skills, certifications, blogPosts, leadershipImpact, analyticsEvents] = await Promise.all([
+  const [
+    projects,
+    experience,
+    education,
+    skills,
+    certifications,
+    blogPosts,
+    leadershipImpact,
+    analyticsEvents,
+    openAiCredentials,
+  ] = await Promise.all([
     apiFetch<Project[]>(withPortfolioId("/projects", portfolioId), { auth: false }),
     apiFetch<Experience[]>(withPortfolioId("/experience", portfolioId), { auth: false }),
     apiFetch<Education[]>(withPortfolioId("/education", portfolioId), { auth: false }),
@@ -990,6 +1101,7 @@ async function fetchAdminCollections(portfolioId: string): Promise<AdminCollecti
     apiFetch<BlogPost[]>(withPortfolioId("/blog", portfolioId), { auth: false }),
     apiFetch<LeadershipImpact[]>(withPortfolioId("/leadership-impact", portfolioId), { auth: false }),
     apiFetch<AnalyticsEvent[]>("/analytics/events?limit=100").catch(() => []),
+    apiFetch<OpenAiCredential[]>("/openai-credentials").catch(() => []),
   ]);
 
   return {
@@ -999,6 +1111,7 @@ async function fetchAdminCollections(portfolioId: string): Promise<AdminCollecti
     education: sortByDisplayDateDesc(education),
     experience: sortJourneyByStartDateAsc(experience),
     leadershipImpact: sortByDisplayOrder(leadershipImpact),
+    openAiCredentials,
     projects,
     skills,
   };
@@ -1044,6 +1157,8 @@ function AdminSectionNavigation({
 
 function getSectionCount(sectionId: AdminSectionId, collections: AdminCollections): number | null {
   switch (sectionId) {
+    case "ai-settings":
+      return collections.openAiCredentials.length;
     case "blog":
       return collections.blogPosts.length;
     case "certifications":
@@ -1139,6 +1254,94 @@ function VisitEventList({ events }: { events: AnalyticsEvent[] }) {
 }
 
 function VisitDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-md border border-white/10 bg-black/20 px-3 py-2">
+      <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</dt>
+      <dd className="mt-1 break-words text-slate-300" title={value}>{value}</dd>
+    </div>
+  );
+}
+
+function OpenAiCredentialList({
+  credentials,
+  onActivate,
+  onDelete,
+  onExpire,
+}: {
+  credentials: OpenAiCredential[];
+  onActivate: (credential: OpenAiCredential) => void;
+  onDelete: (credential: OpenAiCredential) => void;
+  onExpire: (credential: OpenAiCredential) => void;
+}) {
+  if (credentials.length === 0) {
+    return (
+      <p className="mt-5 rounded-md border border-dashed border-white/10 px-3 py-3 text-sm text-slate-400">
+        No OpenAI embedding credentials saved yet.
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-5 grid gap-3">
+      {credentials.map((credential) => (
+        <article className="rounded-md border border-white/10 bg-navy-950/80 p-4" key={credential.id}>
+          <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`rounded-md border px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${
+                    credential.active && !credential.expired
+                      ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-200"
+                      : credential.expired
+                        ? "border-amber-400/40 bg-amber-400/10 text-amber-100"
+                        : "border-white/10 bg-white/[0.04] text-slate-300"
+                  }`}
+                >
+                  {credential.active && !credential.expired ? "Active" : credential.expired ? "Expired" : "Inactive"}
+                </span>
+                <span className="text-xs text-slate-400">{formatVisitDate(credential.updatedAt)}</span>
+              </div>
+              <h3 className="mt-3 break-words text-base font-bold text-white">{credential.label}</h3>
+              <dl className="mt-3 grid gap-2 text-sm text-slate-300 md:grid-cols-2">
+                <CredentialDetail label="Key" value={credential.maskedApiKey} />
+                <CredentialDetail label="Model" value={`${credential.embeddingModel} / ${credential.embeddingDimensions}`} />
+                <CredentialDetail label="Endpoint" value={credential.endpointUrl} />
+                <CredentialDetail label="Created" value={formatVisitDate(credential.createdAt)} />
+              </dl>
+            </div>
+            <div className="flex flex-wrap items-start gap-2 lg:justify-end">
+              <button
+                className="focus-ring inline-flex min-h-9 items-center justify-center rounded-md border border-white/10 px-3 text-xs font-semibold text-slate-200 transition hover:border-electric-500/70 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={credential.active && !credential.expired}
+                onClick={() => onActivate(credential)}
+                type="button"
+              >
+                Activate
+              </button>
+              <button
+                className="focus-ring inline-flex min-h-9 items-center justify-center rounded-md border border-amber-400/30 px-3 text-xs font-semibold text-amber-100 transition hover:border-amber-300 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={credential.expired}
+                onClick={() => onExpire(credential)}
+                type="button"
+              >
+                Expire
+              </button>
+              <button
+                className="focus-ring inline-flex min-h-9 items-center justify-center rounded-md border border-danger-500/30 px-3 text-xs font-semibold text-danger-200 transition hover:border-danger-500 hover:text-white"
+                onClick={() => onDelete(credential)}
+                type="button"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function CredentialDetail({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 rounded-md border border-white/10 bg-black/20 px-3 py-2">
       <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</dt>

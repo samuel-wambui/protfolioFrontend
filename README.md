@@ -31,6 +31,17 @@ Expected endpoints:
 - `GET /blog`
 - `GET /blog/{slug}`
 - `POST /contact`
+- `GET /portfolio-agent/snapshot`
+- `GET /portfolio-agent/facts`
+- `GET /portfolio-agent/chunks`
+- `GET /portfolio-agent/context`
+- `POST /portfolio-agent/reindex`
+- `POST /portfolio-agent/search`
+- `GET /openai-credentials`
+- `POST /openai-credentials`
+- `PATCH /openai-credentials/{id}/activate`
+- `PATCH /openai-credentials/{id}/expire`
+- `DELETE /openai-credentials/{id}`
 
 Responses use this shape:
 
@@ -48,3 +59,35 @@ Portfolio records are database-owned. Seed SQL lives in the backend project at:
 ```text
 /home/samuel/NgarisamuelDev/portfolioBackend/database
 ```
+
+## n8n Portfolio Agent
+
+The frontend portfolio agent route forwards the visitor question to n8n. n8n then calls the Java backend portfolio-agent endpoints. Because the Java backend is connected to Neon, the n8n workflow does not need a Postgres node or direct Neon credentials.
+
+In n8n, read the webhook body fields:
+
+- `question`
+- `portfolioId`
+
+Then fetch prompt data from the Java backend. The active local n8n workflow can use the deployed snapshot endpoint:
+
+```text
+GET /portfolio-agent/snapshot?portfolioId=PORT001&maxChars=16000
+```
+
+After the backend is deployed with the newer context endpoint, the n8n process can set:
+
+```text
+PORTFOLIO_AGENT_DATA_URL=https://portfoliobackend-ltak.onrender.com/api/portfolio-agent/context
+```
+
+That endpoint returns `facts`, `chunks`, and a ready `context` string for the AI prompt.
+
+For Neon pgvector semantic search, the backend exposes:
+
+```text
+POST /portfolio-agent/reindex
+POST /portfolio-agent/search
+```
+
+Embedding credentials are managed from Admin -> AI Settings. The browser only receives masked keys; the backend uses the active non-expired credential for embeddings.

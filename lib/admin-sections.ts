@@ -53,6 +53,12 @@ export const adminSections = [
     label: "Visitors",
     title: "Visitors",
   },
+  {
+    description: "Manage the active OpenAI embedding credential used by backend semantic search.",
+    id: "ai-settings",
+    label: "AI Settings",
+    title: "AI Settings",
+  },
 ] as const;
 
 export type AdminSectionId = (typeof adminSections)[number]["id"];
