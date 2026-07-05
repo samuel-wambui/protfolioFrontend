@@ -2,17 +2,32 @@
 
 import { Bot, Loader2, Send, Sparkles } from "lucide-react";
 import { FormEvent, useState } from "react";
+import { apiFetch } from "@/lib/api-client";
 
 type PortfolioAskPanelProps = {
   portfolioId: string;
   profileName: string;
 };
 
-type AgentResponse = {
-  answer?: string;
-  output?: string;
-  message?: string;
-  sources?: unknown[];
+type PortfolioAgentSearchResult = {
+  sourceType?: string;
+  sourceId?: string;
+  chunkKey?: string;
+  title?: string;
+  section?: string;
+  content?: string;
+  metadata?: unknown;
+  similarity?: number;
+};
+
+type PortfolioAgentSearchResponse = {
+  portfolioId?: string;
+  profileName?: string;
+  facts?: unknown;
+  query?: string;
+  embeddingModel?: string;
+  results?: PortfolioAgentSearchResult[];
+  context?: string;
 };
 
 export function PortfolioAskPanel({ portfolioId, profileName }: PortfolioAskPanelProps) {
@@ -33,25 +48,25 @@ export function PortfolioAskPanel({ portfolioId, profileName }: PortfolioAskPane
     console.info("[portfolio-agent] asking", { portfolioId, question: normalizedQuestion });
 
     try {
-      const response = await fetch("/api/portfolio-agent", {
+      const response = await apiFetch<PortfolioAgentSearchResponse>("/portfolio-agent/search", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
+        auth: false,
+        body: {
           portfolioId,
-          question: normalizedQuestion,
-        }),
+          query: normalizedQuestion,
+        },
       });
 
-      const payload = (await response.json()) as AgentResponse;
+      const responseText =
+        response.context?.trim() ||
+        (response.results && response.results.length > 0
+          ? response.results
+              .map((result, index) =>
+                `Result ${index + 1}${result.section ? ` (${result.section})` : ""}: ${result.content ?? "No content"}`,
+              )
+              .join("\n\n")
+          : "No portfolio agent results found.");
 
-      if (!response.ok) {
-        throw new Error(payload.message || "Portfolio agent request failed");
-      }
-
-      const responseText = payload.answer || payload.output || payload.message || "";
       setAnswer(responseText);
       setStatus("answered");
       console.info("[portfolio-agent] answered", { portfolioId, response: responseText });

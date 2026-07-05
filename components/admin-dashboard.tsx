@@ -539,6 +539,33 @@ export function AdminDashboard({ activeSection }: { activeSection: AdminSectionI
     }
   }
 
+  async function reindexPortfolioAgent() {
+    setState({ section: "AI Settings", status: "saving", message: "Refreshing portfolio embeddings..." });
+
+    try {
+      const response = await apiFetch<{ portfolioId: string; embeddingModel: string; chunksIndexed: number }>("/portfolio-agent/reindex", {
+        method: "POST",
+        auth: false,
+        body: {
+          portfolioId,
+        },
+      });
+
+      await refreshCollections();
+      setState({
+        section: "AI Settings",
+        status: "saved",
+        message: `Portfolio embeddings refreshed (${response.chunksIndexed} chunks indexed).`,
+      });
+    } catch (error) {
+      setState({
+        section: "AI Settings",
+        status: "error",
+        message: error instanceof Error ? error.message : "Could not refresh portfolio embeddings.",
+      });
+    }
+  }
+
   function editProject(project: Project) {
     setProjectValues(toProjectFormValues(project));
     setProjectFormVersion((current) => current + 1);
@@ -679,7 +706,19 @@ export function AdminDashboard({ activeSection }: { activeSection: AdminSectionI
             <TextField defaultValue="1536" name="embeddingDimensions" title="Embedding Dimensions" type="number" />
           </div>
           <TextField name="apiKey" placeholder="sk-..." required title="OpenAI API Key" type="password" />
-          <SaveButton label="Save and Activate Key" />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <SaveButton label="Save and Activate Key" />
+            <button
+              className="focus-ring inline-flex min-h-11 items-center justify-center rounded-md border border-white/10 bg-electric-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-electric-600"
+              onClick={(event) => {
+                event.preventDefault();
+                reindexPortfolioAgent();
+              }}
+              type="button"
+            >
+              Refresh embeddings
+            </button>
+          </div>
         </form>
 
         <OpenAiCredentialList
