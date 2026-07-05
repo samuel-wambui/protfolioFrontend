@@ -6,8 +6,8 @@ import { SiteHeader } from "@/components/site-header";
 
 export const metadata: Metadata = {
   title: {
-    default: "Portfolio",
-    template: "%s | Portfolio",
+    default: "SamuelNgari",
+    template: "%s | SamuelNgari",
   },
   description:
     "A full-stack developer portfolio built with Next.js, TypeScript, Tailwind CSS, Spring Boot, PostgreSQL, Docker, and GitHub Actions.",
