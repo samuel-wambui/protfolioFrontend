@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "./globals.css";
+import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { AuthProvider } from "@/components/auth-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -23,6 +25,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <SiteHeader />
+        <Suspense fallback={null}>
+          <AnalyticsTracker />
+        </Suspense>
         <AuthProvider>{children}</AuthProvider>
         <SiteFooter />
       </body>

@@ -47,6 +47,12 @@ export const adminSections = [
     label: "Blog",
     title: "Blog Posts",
   },
+  {
+    description: "Review recent portfolio page views, clicks, downloads, referrers, locations, and devices.",
+    id: "visitors",
+    label: "Visitors",
+    title: "Visitors",
+  },
 ] as const;
 
 export type AdminSectionId = (typeof adminSections)[number]["id"];

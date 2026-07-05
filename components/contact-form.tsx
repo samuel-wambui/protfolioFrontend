@@ -2,6 +2,7 @@
 
 import { Send } from "lucide-react";
 import { FormEvent, useState } from "react";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 import { sendContactMessage } from "@/lib/portfolio-api";
 
 type FormState = "idle" | "sending" | "sent" | "error";
@@ -14,13 +15,19 @@ export function ContactForm() {
     setState("sending");
 
     const formData = new FormData(event.currentTarget);
+    const subject = String(formData.get("subject") ?? "");
 
     try {
       await sendContactMessage({
         name: String(formData.get("name") ?? ""),
         email: String(formData.get("email") ?? ""),
-        subject: String(formData.get("subject") ?? ""),
+        subject,
         message: String(formData.get("message") ?? ""),
+      });
+      trackAnalyticsEvent({
+        eventType: "contact_submit",
+        targetLabel: subject || "Contact form",
+        targetUrl: "/contact",
       });
       event.currentTarget.reset();
       setState("sent");

@@ -9,6 +9,7 @@ import { adminSections, type AdminSectionId } from "@/lib/admin-sections";
 import { sortByDisplayDateDesc } from "@/lib/date-order";
 import { formatDateRange } from "@/lib/format";
 import { getConfiguredPortfolioId, normalizePortfolioId, withPortfolioId } from "@/lib/portfolio-id";
+import type { AnalyticsEvent } from "@/types/analytics";
 import type {
   BlogPost,
   Certification,
@@ -27,6 +28,7 @@ type SaveState = {
 };
 
 type AdminCollections = {
+  analyticsEvents: AnalyticsEvent[];
   blogPosts: BlogPost[];
   certifications: Certification[];
   education: Education[];
@@ -148,6 +150,7 @@ const skillCategories: Skill["category"][] = [
 const skillLevels: Skill["level"][] = ["Advanced", "Strong", "Growing"];
 
 const emptyCollections: AdminCollections = {
+  analyticsEvents: [],
   blogPosts: [],
   certifications: [],
   education: [],
@@ -582,6 +585,10 @@ export function AdminDashboard({ activeSection }: { activeSection: AdminSectionI
 
       <StatusBar state={state} />
 
+      <AdminSection activeSection={activeSection} sectionId="visitors" title="Visitors">
+        <VisitEventList events={collections.analyticsEvents} />
+      </AdminSection>
+
       <AdminSection activeSection={activeSection} sectionId="profile" title="Profile and Hero Text">
         <form className="grid gap-4" key={profileFormVersion} onSubmit={submitProfile}>
           <div className="grid gap-4 md:grid-cols-2">
@@ -974,7 +981,7 @@ export function AdminDashboard({ activeSection }: { activeSection: AdminSectionI
 }
 
 async function fetchAdminCollections(portfolioId: string): Promise<AdminCollections> {
-  const [projects, experience, education, skills, certifications, blogPosts, leadershipImpact] = await Promise.all([
+  const [projects, experience, education, skills, certifications, blogPosts, leadershipImpact, analyticsEvents] = await Promise.all([
     apiFetch<Project[]>(withPortfolioId("/projects", portfolioId), { auth: false }),
     apiFetch<Experience[]>(withPortfolioId("/experience", portfolioId), { auth: false }),
     apiFetch<Education[]>(withPortfolioId("/education", portfolioId), { auth: false }),
@@ -982,9 +989,11 @@ async function fetchAdminCollections(portfolioId: string): Promise<AdminCollecti
     apiFetch<Certification[]>(withPortfolioId("/certifications", portfolioId), { auth: false }),
     apiFetch<BlogPost[]>(withPortfolioId("/blog", portfolioId), { auth: false }),
     apiFetch<LeadershipImpact[]>(withPortfolioId("/leadership-impact", portfolioId), { auth: false }),
+    apiFetch<AnalyticsEvent[]>("/analytics/events?limit=100").catch(() => []),
   ]);
 
   return {
+    analyticsEvents,
     blogPosts,
     certifications,
     education: sortByDisplayDateDesc(education),
@@ -1051,6 +1060,8 @@ function getSectionCount(sectionId: AdminSectionId, collections: AdminCollection
       return collections.projects.length;
     case "skills":
       return collections.skills.length;
+    case "visitors":
+      return collections.analyticsEvents.length;
   }
 }
 
@@ -1081,6 +1092,57 @@ function StatusBar({ state }: { state: SaveState }) {
   return (
     <div className="surface min-h-14 rounded-lg px-5 py-4 text-sm text-slate-300" role="status">
       {state.message || "Use the forms below to create, update, or soft-delete backend-managed portfolio content."}
+    </div>
+  );
+}
+
+function VisitEventList({ events }: { events: AnalyticsEvent[] }) {
+  if (events.length === 0) {
+    return (
+      <p className="rounded-md border border-dashed border-white/10 px-3 py-3 text-sm text-slate-400">
+        No visit events recorded yet.
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid gap-3">
+      {events.map((event) => (
+        <article className="rounded-md border border-white/10 bg-navy-950/80 p-4" key={event.id}>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-md border border-electric-500/40 bg-electric-500/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-electric-500">
+                  {formatEventType(event.eventType)}
+                </span>
+                <span className="text-xs text-slate-400">{formatVisitDate(event.createdAt)}</span>
+              </div>
+              <h3 className="mt-3 text-base font-bold text-white">{event.path || "/"}</h3>
+              <p className="mt-1 text-sm text-slate-400">{event.pageTitle || "Untitled page"}</p>
+            </div>
+            <div className="grid gap-1 text-sm text-slate-300 lg:text-right">
+              <span>{formatLocation(event)}</span>
+              <span>{event.deviceType || "Unknown device"} / {event.browser || "Unknown browser"}</span>
+            </div>
+          </div>
+
+          <dl className="mt-4 grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-4">
+            <VisitDetail label="Referrer" value={formatReferrer(event.referrer)} />
+            <VisitDetail label="IP" value={event.ipAddress || "Unknown"} />
+            <VisitDetail label="Target" value={event.targetLabel || event.targetUrl || "None"} />
+            <VisitDetail label="Visitor ID" value={event.visitorId || "Unknown"} />
+          </dl>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function VisitDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-md border border-white/10 bg-black/20 px-3 py-2">
+      <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</dt>
+      <dd className="mt-1 truncate text-slate-300" title={value}>{value}</dd>
     </div>
   );
 }
@@ -1276,6 +1338,38 @@ function SaveButton({ label }: { label: string }) {
       <span>{label}</span>
     </button>
   );
+}
+
+function formatEventType(value: string): string {
+  return value.replace(/_/g, " ");
+}
+
+function formatVisitDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+function formatLocation(event: AnalyticsEvent): string {
+  return [event.city, event.region, event.country].filter(Boolean).join(", ") || "Unknown location";
+}
+
+function formatReferrer(value?: string | null): string {
+  if (!value) {
+    return "Direct";
+  }
+
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return value;
+  }
 }
 
 function textValue(formData: FormData, key: string): string {
