@@ -35,6 +35,8 @@ Expected endpoints:
 - `GET /portfolio-agent/facts`
 - `GET /portfolio-agent/chunks`
 - `GET /portfolio-agent/context`
+- `POST /portfolio-agent`
+- `POST /portfolio-agent/ask`
 - `POST /portfolio-agent/reindex`
 - `POST /portfolio-agent/search`
 - `GET /openai-credentials`
@@ -62,7 +64,14 @@ Portfolio records are database-owned. Seed SQL lives in the backend project at:
 
 ## n8n Portfolio Agent
 
-The frontend portfolio agent route forwards the visitor question to n8n. n8n then calls the Java backend portfolio-agent endpoints. Because the Java backend is connected to Neon, the n8n workflow does not need a Postgres node or direct Neon credentials.
+The frontend displays the portfolio agent UI and calls the Java backend. The backend forwards visitor questions and knowledge updates to n8n. n8n can then call the Java backend portfolio-agent data endpoints. Because the Java backend is connected to Neon, the n8n workflow does not need a Postgres node or direct Neon credentials.
+
+The backend defaults to these deployed n8n webhooks:
+
+```bash
+N8N_PORTFOLIO_AGENT_ASK_WEBHOOK_URL=https://n8n.digitalbank365.com/webhook/portfolio-agent-ask
+N8N_PORTFOLIO_AGENT_REINDEX_WEBHOOK_URL=https://n8n.digitalbank365.com/webhook/portfolio-agent-reindex
+```
 
 In n8n, read the webhook body fields:
 

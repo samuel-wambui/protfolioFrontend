@@ -9,25 +9,15 @@ type PortfolioAskPanelProps = {
   profileName: string;
 };
 
-type PortfolioAgentSearchResult = {
-  sourceType?: string;
-  sourceId?: string;
-  chunkKey?: string;
-  title?: string;
-  section?: string;
-  content?: string;
-  metadata?: unknown;
-  similarity?: number;
-};
-
-type PortfolioAgentSearchResponse = {
-  portfolioId?: string;
-  profileName?: string;
-  facts?: unknown;
-  query?: string;
-  embeddingModel?: string;
-  results?: PortfolioAgentSearchResult[];
-  context?: string;
+type PortfolioAgentAskResponse = {
+  answer?: string;
+  output?: string;
+  message?: string;
+  data?: {
+    answer?: string;
+    output?: string;
+    message?: string;
+  };
 };
 
 export function PortfolioAskPanel({ portfolioId, profileName }: PortfolioAskPanelProps) {
@@ -48,26 +38,19 @@ export function PortfolioAskPanel({ portfolioId, profileName }: PortfolioAskPane
     console.info("[portfolio-agent] asking", { portfolioId, question: normalizedQuestion });
 
     try {
-      const response = await apiFetch<PortfolioAgentSearchResponse>("/portfolio-agent/search", {
+      const response = await apiFetch<PortfolioAgentAskResponse>("/portfolio-agent", {
         method: "POST",
         auth: false,
         body: {
           portfolioId,
-          query: normalizedQuestion,
+          question: normalizedQuestion,
         },
       });
 
       const responseText =
-        response.context?.trim() ||
-        (response.results && response.results.length > 0
-          ? response.results
-              .map((result, index) =>
-                `Result ${index + 1}${result.section ? ` (${result.section})` : ""}: ${result.content ?? "No content"}`,
-              )
-              .join("\n\n")
-          : "No portfolio agent results found.");
+        response.answer || response.output || response.data?.answer || response.data?.output || response.message || "";
 
-      setAnswer(responseText);
+      setAnswer(responseText || "No answer returned yet.");
       setStatus("answered");
       console.info("[portfolio-agent] answered", { portfolioId, response: responseText });
     } catch (error) {

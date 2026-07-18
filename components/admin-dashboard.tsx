@@ -541,7 +541,7 @@ export function AdminDashboard({ activeSection }: { activeSection: AdminSectionI
   }
 
   async function reindexPortfolioAgent() {
-    setState({ section: "AI Settings", status: "saving", message: "Refreshing portfolio embeddings..." });
+    setState({ section: "AI Settings", status: "saving", message: "Refreshing portfolio AI knowledge..." });
 
     try {
       const response = await apiFetch<{ portfolioId: string; embeddingModel: string; chunksIndexed: number }>("/portfolio-agent/reindex", {
@@ -556,13 +556,13 @@ export function AdminDashboard({ activeSection }: { activeSection: AdminSectionI
       setState({
         section: "AI Settings",
         status: "saved",
-        message: `Portfolio embeddings refreshed (${response.chunksIndexed} chunks indexed).`,
+        message: `Portfolio AI knowledge refreshed (${response.chunksIndexed} chunks indexed).`,
       });
     } catch (error) {
       setState({
         section: "AI Settings",
         status: "error",
-        message: error instanceof Error ? error.message : "Could not refresh portfolio embeddings.",
+        message: error instanceof Error ? error.message : "Could not refresh portfolio AI knowledge.",
       });
     }
   }
@@ -724,7 +724,7 @@ export function AdminDashboard({ activeSection }: { activeSection: AdminSectionI
               }}
               type="button"
             >
-              Refresh embeddings
+              Refresh AI knowledge
             </button>
           </div>
         </form>
