@@ -1811,7 +1811,7 @@ function ImagePreview({ compact = false, value }: { compact?: boolean; value: st
     return (
       <img
         alt=""
-        className={compact ? "h-32 w-full object-cover" : "h-28 w-full rounded-md object-cover sm:h-28"}
+        className={compact ? "h-32 w-full bg-black/20 object-contain" : "h-28 w-full rounded-md bg-black/20 object-contain sm:h-28"}
         src={value}
       />
     );

@@ -3,12 +3,25 @@ type ProjectVisualProps = {
 };
 
 export function ProjectVisual({ screenshots }: ProjectVisualProps) {
+  const isSingleScreenshot = screenshots.length === 1;
+
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className={isSingleScreenshot ? "grid justify-items-center gap-5" : "grid gap-5 md:grid-cols-2 xl:grid-cols-3"}>
       {screenshots.map((screenshot, index) => (
-        <figure className="surface overflow-hidden rounded-lg" key={`${screenshot}-${index}`}>
+        <figure
+          className={`surface w-full overflow-hidden rounded-lg ${isSingleScreenshot ? "max-w-3xl" : ""}`}
+          key={`${screenshot}-${index}`}
+        >
           {isImageUrl(screenshot) ? (
-            <img alt={`Project screenshot ${index + 1}`} className="h-56 w-full object-cover" src={screenshot} />
+            <a
+              aria-label={`Open project screenshot ${index + 1}`}
+              className="grid h-64 place-items-center bg-black/30 p-3 sm:h-80 lg:h-96"
+              href={screenshot}
+              rel="noreferrer"
+              target="_blank"
+            >
+              <img alt={`Project screenshot ${index + 1}`} className="max-h-full max-w-full object-contain" src={screenshot} />
+            </a>
           ) : (
             <>
               <div className="flex h-9 items-center gap-1.5 border-b border-white/10 bg-navy-900 px-3">
