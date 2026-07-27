@@ -60,7 +60,7 @@ export default async function HomePage() {
       <section className="mx-auto grid min-h-[calc(100svh-112px)] max-w-7xl gap-6 lg:grid-rows-[1fr_auto]">
         <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
           <div className="animate-fade-up">
-            <span className="inline-flex min-h-7 w-fit items-center gap-2 rounded-md border border-teal-400/20 bg-teal-400/10 px-3 text-[11px] font-bold uppercase tracking-[0.18em] text-teal-300">
+            <span className="inline-flex min-h-7 w-fit items-center gap-2 rounded-md border border-teal-400/20 bg-teal-400/10 px-3 text-[8.25px] font-bold uppercase tracking-[0.18em] text-teal-300">
               <span className="h-1.5 w-1.5 rounded-full bg-teal-300" />
               {profile.title}
             </span>
@@ -96,11 +96,11 @@ export default async function HomePage() {
             </div>
 
             <div className="mt-5">
-              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Technologies I Work With</p>
+              <p className="mb-2 text-[8.25px] font-bold uppercase tracking-[0.2em] text-slate-500">Technologies I Work With</p>
               <div className="flex flex-wrap gap-2">
                 {techStack.map((technology) => (
                   <span
-                    className="inline-flex min-h-7 items-center rounded-md border border-white/10 bg-white/[0.04] px-2.5 text-[11px] font-semibold text-slate-200"
+                    className="inline-flex min-h-7 items-center rounded-md border border-white/10 bg-white/[0.04] px-2.5 text-[8.25px] font-semibold text-slate-200"
                     key={technology}
                   >
                     {technology}
@@ -273,8 +273,8 @@ function HeroStat({
       </span>
       <div className="min-w-0">
         <p className="text-base font-bold leading-none text-teal-200">{value}</p>
-        <p className="mt-1 text-[11px] font-bold text-white">{label}</p>
-        <p className="mt-0.5 text-[10px] text-slate-500">{note}</p>
+        <p className="mt-1 text-[8.25px] font-bold text-white">{label}</p>
+        <p className="mt-0.5 text-[7.5px] text-slate-500">{note}</p>
       </div>
     </article>
   );
@@ -295,19 +295,19 @@ function ProjectMiniCard({ index, project }: { index: number; project: Project }
         </span>
         <div>
           <h3 className="text-sm font-bold leading-5 text-white">{project.title}</h3>
-          <p className="mt-1 text-[11px] leading-4 text-slate-400">{project.problem}</p>
+          <p className="mt-1 text-[8.25px] leading-4 text-slate-400">{project.problem}</p>
         </div>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         {project.technologies.slice(0, 4).map((technology) => (
-          <span className="rounded-sm bg-black/22 px-2 py-1 text-[10px] font-semibold text-slate-300" key={technology}>
+          <span className="rounded-sm bg-black/22 px-2 py-1 text-[7.5px] font-semibold text-slate-300" key={technology}>
             {technology}
           </span>
         ))}
       </div>
 
-      <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-teal-300 transition group-hover:text-white">
+      <span className="mt-3 inline-flex items-center gap-1 text-[8.25px] font-bold text-teal-300 transition group-hover:text-white">
         View Project <ArrowRight className="h-3 w-3" />
       </span>
     </a>
