@@ -74,8 +74,8 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                 Technologies
               </h2>
               <div className="mt-4 flex flex-wrap gap-2">
-                {project.technologies.map((technology) => (
-                  <span className="rounded-md bg-white/5 px-2.5 py-1 text-sm text-slate-300" key={technology}>
+                {project.technologies.map((technology, technologyIndex) => (
+                  <span className="rounded-md bg-white/5 px-2.5 py-1 text-sm text-slate-300" key={`${technology}-${technologyIndex}`}>
                     {technology}
                   </span>
                 ))}
@@ -110,8 +110,8 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
               <article className="surface rounded-lg p-5" key={section.title}>
                 <h2 className="text-xl font-bold text-white">{section.title}</h2>
                 <ul className="mt-4 grid gap-3">
-                  {section.items.map((item) => (
-                    <li className="flex gap-3 text-sm leading-6 text-slate-300" key={item}>
+                  {section.items.map((item, itemIndex) => (
+                    <li className="flex gap-3 text-sm leading-6 text-slate-300" key={`${section.title}-${item}-${itemIndex}`}>
                       <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-success-500" />
                       <span>{item}</span>
                     </li>
