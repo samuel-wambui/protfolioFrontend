@@ -7,13 +7,30 @@ type ApiFetchOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
 };
 
-const API_BASE_URL =
+export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   // Local backend:
   // "http://localhost:8080/api";
   "https://portfoliobackend-ltak.onrender.com/api";
 
 export const AUTH_SESSION_EXPIRED_EVENT = "portfolio-auth-session-expired";
+
+export function resolveApiAssetUrl(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("/api/")) {
+    return `${apiOrigin()}${trimmed}`;
+  }
+
+  if (trimmed.startsWith("/")) {
+    return `${API_BASE_URL}${trimmed}`;
+  }
+
+  return trimmed;
+}
 
 export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
   const { auth = true, body, headers: initialHeaders, ...requestOptions } = options;
@@ -87,4 +104,12 @@ function isApiResponse<T>(payload: ApiResponse<T> | T): payload is ApiResponse<T
     "code" in payload &&
     "data" in payload
   );
+}
+
+function apiOrigin(): string {
+  try {
+    return new URL(API_BASE_URL).origin;
+  } catch {
+    return "";
+  }
 }

@@ -34,13 +34,15 @@ export default async function HomePage() {
   const projects = orderProjects(projectResult).slice(0, 4);
   const techStack = getOrderedSkillNames(skillResult, 12);
   const stats = getStats(profile, projectResult.length, skillResult.length);
+  const heroImageUrl = profile.heroImageUrl || "/images/portfolio-hero.png";
 
   return (
     <main className="relative isolate overflow-x-hidden px-4 pb-10 pt-5 sm:px-6 lg:px-8">
       <div aria-hidden="true" className="absolute inset-0 -z-20 bg-[#030712]" />
       <div
         aria-hidden="true"
-        className="absolute inset-0 -z-10 bg-[url('/images/portfolio-hero.png')] bg-cover bg-center opacity-20"
+        className="absolute inset-0 -z-10 bg-cover bg-center opacity-20"
+        style={{ backgroundImage: `url(${JSON.stringify(heroImageUrl)})` }}
       />
       <div
         aria-hidden="true"

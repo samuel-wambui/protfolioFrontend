@@ -23,6 +23,7 @@ export type Profile = {
   portfolioUrl: string | null;
   cvUrl?: string | null;
   photoUrl?: string | null;
+  heroImageUrl?: string | null;
   projectsCompleted: number | null;
   yearsExperience: number | null;
   learningLabel: string | null;

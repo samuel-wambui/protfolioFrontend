@@ -1,10 +1,10 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { Eye, EyeOff, LogOut, Pencil, Plus, Save, ShieldCheck, Trash2 } from "lucide-react";
+import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
+import { Eye, EyeOff, ImageIcon, LogOut, Pencil, Plus, Save, ShieldCheck, Trash2, UploadCloud, X } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch, resolveApiAssetUrl } from "@/lib/api-client";
 import { adminSections, type AdminSectionId } from "@/lib/admin-sections";
 import { sortByDisplayDateDesc } from "@/lib/date-order";
 import { formatDateRange } from "@/lib/format";
@@ -54,6 +54,16 @@ type OpenAiCredential = {
   deletedAt?: string | null;
 };
 
+type ImageUploadResponse = {
+  id: number;
+  portfolioId: string;
+  purpose: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  url: string;
+};
+
 type ProfileFormValues = {
   collaborationLabel: string;
   currentlyFocusedOn: string;
@@ -61,6 +71,7 @@ type ProfileFormValues = {
   email: string;
   fullName: string;
   githubUrl: string;
+  heroImageUrl: string;
   heroText: string;
   learningLabel: string;
   linkedinUrl: string;
@@ -184,6 +195,7 @@ const emptyProfileFormValues: ProfileFormValues = {
   email: "",
   fullName: "",
   githubUrl: "",
+  heroImageUrl: "",
   heroText: "",
   learningLabel: "",
   linkedinUrl: "",
@@ -401,6 +413,7 @@ export function AdminDashboard({ activeSection }: { activeSection: AdminSectionI
           portfolioUrl: nullableTextValue(formData, "portfolioUrl"),
           cvUrl: nullableTextValue(formData, "cvUrl"),
           photoUrl: nullableTextValue(formData, "photoUrl"),
+          heroImageUrl: nullableTextValue(formData, "heroImageUrl"),
           projectsCompleted: nullableNumberValue(formData, "projectsCompleted"),
           yearsExperience: nullableNumberValue(formData, "yearsExperience"),
           learningLabel: nullableTextValue(formData, "learningLabel"),
@@ -756,11 +769,28 @@ export function AdminDashboard({ activeSection }: { activeSection: AdminSectionI
             <TextField defaultValue={profileValues.linkedinUrl} name="linkedinUrl" placeholder="https://linkedin.com/in/..." title="LinkedIn URL" type="url" />
             <TextField defaultValue={profileValues.portfolioUrl} name="portfolioUrl" placeholder="https://..." title="Portfolio URL" type="url" />
             <TextField defaultValue={profileValues.cvUrl} name="cvUrl" placeholder="/files/cv.pdf or https://..." title="CV URL" />
-            <TextField defaultValue={profileValues.photoUrl} name="photoUrl" placeholder="/images/samuel-ngari-profile.png" title="Photo URL" />
             <TextField defaultValue={profileValues.projectsCompleted} name="projectsCompleted" placeholder="20" title="Projects Completed" type="number" />
             <TextField defaultValue={profileValues.yearsExperience} name="yearsExperience" placeholder="3" title="Years Experience" type="number" />
             <TextField defaultValue={profileValues.learningLabel} name="learningLabel" placeholder="AI & Automation" title="Learning Label" />
             <TextField defaultValue={profileValues.collaborationLabel} name="collaborationLabel" placeholder="Automation Workflows" title="Collaboration Label" />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <SingleImageUploadField
+              defaultValue={profileValues.photoUrl}
+              name="photoUrl"
+              placeholder="/api/images/1 or https://..."
+              portfolioId={portfolioId}
+              purpose="profile-photo"
+              title="Profile Photo"
+            />
+            <SingleImageUploadField
+              defaultValue={profileValues.heroImageUrl}
+              name="heroImageUrl"
+              placeholder="/api/images/2 or https://..."
+              portfolioId={portfolioId}
+              purpose="home-hero"
+              title="Homepage Background"
+            />
           </div>
           <SaveButton label="Save Profile" />
         </form>
@@ -815,7 +845,14 @@ export function AdminDashboard({ activeSection }: { activeSection: AdminSectionI
             <HiddenId value={projectValues.id} />
             <TextArea defaultValue={projectValues.problem} name="problem" title="Problem" />
             <TextArea defaultValue={projectValues.architecture} name="architecture" title="Architecture" />
-            <TextField defaultValue={projectValues.screenshots} name="screenshots" placeholder="/images/portfolio-hero.png, /images/project.png" title="Screenshot URLs" />
+            <ImageListUploadField
+              defaultValue={projectValues.screenshots}
+              name="screenshots"
+              placeholder="/api/images/3, https://..."
+              portfolioId={portfolioId}
+              purpose="project-screenshot"
+              title="Project Screenshots"
+            />
             <TextField defaultValue={projectValues.technologies} name="technologies" placeholder="Next.js, Spring Boot, PostgreSQL" title="Technologies" />
             <TextField defaultValue={projectValues.challenges} name="challenges" placeholder="Challenge one, Challenge two" title="Challenges" />
             <TextField defaultValue={projectValues.results} name="results" placeholder="Result one, Result two" title="Results" />
@@ -1162,6 +1199,20 @@ async function fetchAdminCollections(portfolioId: string): Promise<AdminCollecti
     projects,
     skills,
   };
+}
+
+async function uploadPortfolioImageFile(file: File, portfolioId: string, purpose: string): Promise<string> {
+  const formData = new FormData();
+  formData.set("file", file);
+  formData.set("portfolioId", portfolioId);
+  formData.set("purpose", purpose);
+
+  const uploaded = await apiFetch<ImageUploadResponse>("/images", {
+    method: "POST",
+    body: formData,
+  });
+
+  return resolveApiAssetUrl(uploaded.url);
 }
 
 function AdminSectionNavigation({
@@ -1574,6 +1625,205 @@ function TextArea({
   );
 }
 
+function SingleImageUploadField({
+  defaultValue = "",
+  name,
+  placeholder,
+  portfolioId,
+  purpose,
+  title,
+}: {
+  defaultValue?: string;
+  name: string;
+  placeholder?: string;
+  portfolioId: string;
+  purpose: string;
+  title: string;
+}) {
+  const [value, setValue] = useState(defaultValue);
+  const [message, setMessage] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const inputId = `${name}-${purpose}-upload`;
+
+  async function uploadSelectedFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setUploading(true);
+    setMessage(`Uploading ${file.name}...`);
+
+    try {
+      const imageUrl = await uploadPortfolioImageFile(file, portfolioId, purpose);
+      setValue(imageUrl);
+      setMessage(`${file.name} uploaded to the backend database.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Image could not be uploaded.");
+    } finally {
+      setUploading(false);
+      event.target.value = "";
+    }
+  }
+
+  return (
+    <div className="grid gap-2 text-sm font-semibold text-white">
+      <span>{title}</span>
+      <div className="grid gap-3 rounded-md border border-white/10 bg-navy-950 p-3">
+        <div className="grid gap-3 sm:grid-cols-[8rem_1fr] sm:items-center">
+          <ImagePreview value={value} />
+          <div className="grid min-w-0 gap-3">
+            <input
+              className="focus-ring min-h-11 rounded-md border border-white/10 bg-black/20 px-3 text-white placeholder:text-slate-500"
+              name={name}
+              onChange={(event) => setValue(event.target.value)}
+              placeholder={placeholder}
+              value={value}
+            />
+            <div className="flex flex-wrap gap-2">
+              <input accept="image/*" className="sr-only" id={inputId} onChange={uploadSelectedFile} type="file" />
+              <label
+                className="focus-ring inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-md border border-electric-500/40 px-3 text-xs font-semibold text-electric-200 transition hover:border-electric-500 hover:text-white"
+                htmlFor={inputId}
+              >
+                <UploadCloud className="h-4 w-4" />
+                <span>{uploading ? "Uploading" : "Upload Image"}</span>
+              </label>
+              {value ? (
+                <button
+                  className="focus-ring inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-white/10 px-3 text-xs font-semibold text-slate-200 transition hover:border-danger-500/60 hover:text-white"
+                  onClick={() => {
+                    setValue("");
+                    setMessage("");
+                  }}
+                  type="button"
+                >
+                  <X className="h-4 w-4" />
+                  <span>Clear</span>
+                </button>
+              ) : null}
+            </div>
+            {message ? <p className="text-xs font-medium text-slate-400">{message}</p> : null}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ImageListUploadField({
+  defaultValue = "",
+  name,
+  placeholder,
+  portfolioId,
+  purpose,
+  title,
+}: {
+  defaultValue?: string;
+  name: string;
+  placeholder?: string;
+  portfolioId: string;
+  purpose: string;
+  title: string;
+}) {
+  const [value, setValue] = useState(defaultValue);
+  const [message, setMessage] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const inputId = `${name}-${purpose}-upload`;
+  const screenshots = listFromText(value);
+
+  async function uploadSelectedFiles(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) {
+      return;
+    }
+
+    setUploading(true);
+    setMessage(`Uploading ${files.length} image${files.length === 1 ? "" : "s"}...`);
+
+    try {
+      const uploadedUrls = await Promise.all(
+        files.map((file) => uploadPortfolioImageFile(file, portfolioId, purpose)),
+      );
+      setValue([...screenshots, ...uploadedUrls].join(", "));
+      setMessage(`${files.length} image${files.length === 1 ? "" : "s"} uploaded to the backend database.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Screenshots could not be uploaded.");
+    } finally {
+      setUploading(false);
+      event.target.value = "";
+    }
+  }
+
+  function removeScreenshot(index: number) {
+    setValue(screenshots.filter((_, itemIndex) => itemIndex !== index).join(", "));
+  }
+
+  return (
+    <div className="grid gap-2 text-sm font-semibold text-white">
+      <span>{title}</span>
+      <div className="grid gap-3 rounded-md border border-white/10 bg-navy-950 p-3">
+        <textarea
+          className="focus-ring min-h-24 resize-y rounded-md border border-white/10 bg-black/20 px-3 py-3 text-white placeholder:text-slate-500"
+          name={name}
+          onChange={(event) => setValue(event.target.value)}
+          placeholder={placeholder}
+          value={value}
+        />
+        <div className="flex flex-wrap gap-2">
+          <input accept="image/*" className="sr-only" id={inputId} multiple onChange={uploadSelectedFiles} type="file" />
+          <label
+            className="focus-ring inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-md border border-electric-500/40 px-3 text-xs font-semibold text-electric-200 transition hover:border-electric-500 hover:text-white"
+            htmlFor={inputId}
+          >
+            <UploadCloud className="h-4 w-4" />
+            <span>{uploading ? "Uploading" : "Upload Screenshots"}</span>
+          </label>
+        </div>
+        {screenshots.length > 0 ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {screenshots.map((screenshot, index) => (
+              <figure className="overflow-hidden rounded-md border border-white/10 bg-black/20" key={`${screenshot}-${index}`}>
+                <ImagePreview value={screenshot} compact />
+                <figcaption className="grid gap-2 border-t border-white/10 p-2">
+                  <span className="break-all text-xs font-medium text-slate-400">{screenshot}</span>
+                  <button
+                    className="focus-ring inline-flex min-h-8 w-fit items-center justify-center gap-2 rounded-md border border-danger-500/30 px-2 text-xs font-semibold text-danger-200 transition hover:border-danger-500 hover:text-white"
+                    onClick={() => removeScreenshot(index)}
+                    type="button"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    <span>Remove</span>
+                  </button>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        ) : null}
+        {message ? <p className="text-xs font-medium text-slate-400">{message}</p> : null}
+      </div>
+    </div>
+  );
+}
+
+function ImagePreview({ compact = false, value }: { compact?: boolean; value: string }) {
+  if (isImageValue(value)) {
+    return (
+      <img
+        alt=""
+        className={compact ? "h-32 w-full object-cover" : "h-28 w-full rounded-md object-cover sm:h-28"}
+        src={value}
+      />
+    );
+  }
+
+  return (
+    <div className={compact ? "grid h-32 place-items-center text-slate-500" : "grid h-28 place-items-center rounded-md border border-dashed border-white/10 text-slate-500"}>
+      <ImageIcon className="h-7 w-7" />
+    </div>
+  );
+}
+
 function SelectField({
   defaultValue,
   name,
@@ -1669,10 +1919,19 @@ function textValue(formData: FormData, key: string): string {
 }
 
 function listValue(formData: FormData, key: string): string[] {
-  return textValue(formData, key)
+  return listFromText(textValue(formData, key));
+}
+
+function listFromText(value: string): string[] {
+  return value
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function isImageValue(value: string): boolean {
+  const normalized = value.trim();
+  return normalized.startsWith("http://") || normalized.startsWith("https://") || normalized.startsWith("/");
 }
 
 function nullableTextValue(formData: FormData, key: string): string | null {
@@ -1761,6 +2020,7 @@ function toProfileFormValues(profile: Profile | null): ProfileFormValues {
     email: textFormValue(profile.email),
     fullName: textFormValue(profile.fullName),
     githubUrl: textFormValue(profile.githubUrl),
+    heroImageUrl: textFormValue(profile.heroImageUrl),
     heroText: textFormValue(profile.heroText),
     learningLabel: textFormValue(profile.learningLabel),
     linkedinUrl: textFormValue(profile.linkedinUrl),
